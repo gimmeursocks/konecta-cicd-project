@@ -1,0 +1,11 @@
+.DS_Store
+npm-debug.log*
+*.log
+.env
+dist/
+node_modules/
+
+.gitignore
+ci.sh
+eslint.config.js
+server.test.js
