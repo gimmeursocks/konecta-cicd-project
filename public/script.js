@@ -83,17 +83,22 @@ async function loadData() {
   const namesRes = await fetch("/input/names.json");
   const weeksRes = await fetch("/input/selection.json");
   const statusRes = await fetch("/input/status.json");
-  const historyRes = await fetch("/output/history.json");
+  const historyRes = await fetch("/history");
 
   namesData = await namesRes.json();
   weeksData = await weeksRes.json();
   statusesData = await statusRes.json();
 
-  try {
-    historyData = await historyRes.json();
-  } catch {
-    historyData = {};
-  }
+  // Since postgres returns flat rows
+  const flatHistory = await historyRes.json(); // [{ emp_id, week, day, status }]
+  historyData = {};
+
+  // Transform flat array into nested object
+  flatHistory.forEach(({ emp_id, week, day, status }) => {
+    if (!historyData[emp_id]) historyData[emp_id] = {};
+    if (!historyData[emp_id][week]) historyData[emp_id][week] = {};
+    historyData[emp_id][week][day] = status;
+  });
 
   // Cleanup invalid entries
   for (const empId in historyData) {

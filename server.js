@@ -1,10 +1,37 @@
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
 const bodyParser = require("body-parser");
+const { Pool } = require("pg");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.APP_PORT || 3000;
+
+// PostgreSQL connection
+const pool = new Pool({
+  host: process.env.DB_HOST || "postgres",
+  port: process.env.DB_PORT || 5432,
+  user: process.env.DB_USER || "postgres",
+  password: process.env.DB_PASSWORD || "postgres",
+  database: "postgres",
+});
+
+// Ensure table exists
+const initDb = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS history (
+      emp_id TEXT NOT NULL,
+      week TEXT NOT NULL,
+      day TEXT NOT NULL,
+      status TEXT NOT NULL,
+      PRIMARY KEY (emp_id, week, day)
+    )
+  `);
+};
+
+initDb().catch((err) => {
+  console.error("Failed to initialize DB:", err);
+  process.exit(1);
+});
 
 // Middleware
 app.use(bodyParser.json());
@@ -19,19 +46,45 @@ app.use("/input", express.static(path.join(__dirname, "input")));
 app.use("/output", express.static(path.join(__dirname, "output")));
 
 // API to save history data
-app.post("/save-history", (req, res) => {
-  const historyPath = path.join(__dirname, "output", "history.json");
-  const json = JSON.stringify(req.body, null, 2);
+app.post("/save-history", async (req, res) => {
+  try {
+    const data = req.body; // { empId: { week: { day: status } } }
 
-  fs.writeFile(historyPath, json, "utf8", (err) => {
-    if (err) {
-      console.error("Error saving history.json:", err);
-      res.status(500).send("Failed to save history.json");
-    } else {
-      console.log("History successfully saved.");
-      res.status(200).send("Saved");
+    for (const empId in data) {
+      for (const week in data[empId]) {
+        for (const day in data[empId][week]) {
+          const status = data[empId][week][day];
+
+          await pool.query(
+            `
+            INSERT INTO history (emp_id, week, day, status)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (emp_id, week, day)
+            DO UPDATE SET status = EXCLUDED.status
+          `,
+            [empId, week, day, status],
+          );
+        }
+      }
     }
-  });
+
+    console.log("History successfully saved.");
+    res.status(200).send("Saved");
+  } catch (err) {
+    console.error("Error saving history:", err);
+    res.status(500).send("Failed to save history");
+  }
+});
+
+// API to read history data, acts as output/history.json
+app.get("/history", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM history");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error reading history:", err);
+    res.status(500).send("Failed to read history");
+  }
 });
 
 // Start Server only if this file is run directly
