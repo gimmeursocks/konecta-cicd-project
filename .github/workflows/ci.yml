@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+env:
+  IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+  IMAGE_TAG: ${{ github.sha }}
+  DOCKER_USER: ${{ secrets.DOCKER_USER }}
+  DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint with ESLint
+        run: npx eslint . --max-warnings 0
+
+      - name: Check formatting with Prettier
+        run: npx prettier --check .
+
+      - name: Run tests with Jest
+        run: npm test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker compose build
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+          sudo mv trivy /usr/local/bin/
+
+      - name: Scan image with Trivy
+        run: |
+          trivy image \
+            --exit-code 1 \
+            --quiet \
+            --skip-version-check \
+            --ignore-unfixed \
+            --severity HIGH,CRITICAL \
+            --format json "${IMAGE_NAME}:${IMAGE_TAG}" |
+          jq '.Results[] | select(.Vulnerabilities | length > 0)'
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ env.DOCKER_PASS }}
+
+      - name: Push Docker image
+        run: docker push "${IMAGE_NAME}:${IMAGE_TAG}"
+
+      - name: Start containers
+        run: docker compose up -d
