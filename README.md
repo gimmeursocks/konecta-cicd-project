@@ -29,11 +29,11 @@ We were tasked with dockerizing a node.js application to track team members avai
    IMAGE_NAME=your-username/your-image
    IMAGE_TAG=latest
    
-   APP_PORT=
-   POSTGRES_PORT=
-   POSTGRES_HOST=
-   POSTGRES_USER=
-   POSTGRES_PASSWORD=
+   APP_PORT=3000
+   POSTGRES_PORT=5432
+   POSTGRES_HOST=postgres
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
    ```
 
 ---
