@@ -1,3 +1,5 @@
+![Deploy Status](https://github.com/gimmeursocks/konecta-cicd-project/actions/workflows/ci.yml/badge.svg)
+
 # Konecta CICD Project
 
 We were tasked with dockerizing a node.js application to track team members availability. This project uses docker volumes for postgresql to ensure data persistence, to fix the issue where previously data was lost when containers were stopped or removed. A full CI/CD bash script pipeline was included, using ESLint, Prettier, Jest, Trivy, and docker compose. Finally the image is pushed to docker hub.
