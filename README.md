@@ -32,7 +32,7 @@ We were tasked with dockerizing a node.js application to track team members avai
    DOCKER_PASS=your_dockerhub_password
    IMAGE_NAME=your-username/your-image
    IMAGE_TAG=latest
-   
+
    APP_PORT=3000
    POSTGRES_PORT=5432
    POSTGRES_HOST=postgres
@@ -153,23 +153,23 @@ services:
     image: "${IMAGE_NAME}:${IMAGE_TAG}"
     build: .
     ports:
-      - "3000:3000"
+      - "${APP_PORT}:${APP_PORT}"
     environment:
-      - APP_PORT=3000
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      APP_PORT: ${APP_PORT}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       - postgres
 
   postgres:
     image: postgres:alpine
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5342"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
 
