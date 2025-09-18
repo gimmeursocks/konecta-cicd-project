@@ -30,7 +30,7 @@ We were tasked with dockerizing a node.js application to track team members avai
    DOCKER_PASS=your_dockerhub_password
    IMAGE_NAME=your-username/your-image
    IMAGE_TAG=latest
-   
+
    APP_PORT=3000
    POSTGRES_PORT=5432
    POSTGRES_HOST=postgres
@@ -191,7 +191,6 @@ volumes:
    - Image push to docker hub was successful
    - Docker builds successfully
    - App is accessible through `http://localhost:3000`
-   
 3. Check that postgreSQL data persists after stopping containers:
 
    ```bash
