@@ -1,5 +1,7 @@
 ![Deploy Status](https://github.com/gimmeursocks/konecta-cicd-project/actions/workflows/ci.yml/badge.svg)
 
+<sub>GitHub Actions workflow (`.github/workflows/ci.yml`) runs the same checks defined in `ci.sh` on every push.</sub>
+
 # Konecta CICD Project
 
 We were tasked with dockerizing a node.js application to track team members availability. This project uses docker volumes for postgresql to ensure data persistence, to fix the issue where previously data was lost when containers were stopped or removed. A full CI/CD bash script pipeline was included, using ESLint, Prettier, Jest, Trivy, and docker compose. Finally the image is pushed to docker hub.
@@ -30,7 +32,7 @@ We were tasked with dockerizing a node.js application to track team members avai
    DOCKER_PASS=your_dockerhub_password
    IMAGE_NAME=your-username/your-image
    IMAGE_TAG=latest
-
+   
    APP_PORT=3000
    POSTGRES_PORT=5432
    POSTGRES_HOST=postgres
