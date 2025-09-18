@@ -1,8 +1,8 @@
 # Konecta CICD Project
 
-We were tasked with dockerizing a node.js application to track team members availability. This project uses docker volumes for postgresql to ensure data persistence, to fix the issue where previously data was lost when containers were stopped or removed. A full CI/CD bash script pipeline was included, using ESLint, Prettier, Jest, and docker compose.
+We were tasked with dockerizing a node.js application to track team members availability. This project uses docker volumes for postgresql to ensure data persistence, to fix the issue where previously data was lost when containers were stopped or removed. A full CI/CD bash script pipeline was included, using ESLint, Prettier, Jest, Trivy, and docker compose. Finally the image is pushed to docker hub.
 
-----
+---
 
 ## Project Setup
 
@@ -15,10 +15,25 @@ We were tasked with dockerizing a node.js application to track team members avai
 
    - `.gitignore` file was added to skip ignore large unwanted files
 
-2. Install dependencies (for local development):
+2. Install dependencies for local development:
 
    ```bash
    npm install
+   ```
+
+3. Fill in the `.env.example`, then rename it to `.env`:
+
+   ```bash
+   DOCKER_USER=your_dockerhub_username
+   DOCKER_PASS=your_dockerhub_password
+   IMAGE_NAME=your-username/your-image
+   IMAGE_TAG=latest
+   
+   APP_PORT=
+   POSTGRES_PORT=
+   POSTGRES_HOST=
+   POSTGRES_USER=
+   POSTGRES_PASSWORD=
    ```
 
 ---
@@ -31,19 +46,40 @@ This script automates the development workflow:
 #!/bin/bash
 set -euo pipefail # Exit immediately if any command fails
 
+# load docker environment variables securely
+set -o allexport; source .env; set +o allexport
+
 echo "Starting CI process..."
 
 echo "Linting code with ESLint..."
-npx eslint .
+npx eslint . --max-warnings 0
 
 echo "Formatting code with Prettier..."
-npx prettier --write .
+npx prettier --check .
 
 echo "Running Tests with Jest..."
 npm test
 
-echo "Building and starting Docker containers..."
-docker compose up --build -d
+echo "Building Docker image..."
+docker compose build
+
+echo "Scanning image with Trivy..."
+# only show vulnerabilities if found
+trivy image \
+  --exit-code 1 \
+  --quiet \
+  --skip-version-check \
+  --ignore-unfixed \
+  --severity HIGH,CRITICAL \
+  --format json "${IMAGE_NAME}:${IMAGE_TAG}" |
+  jq '.Results[] | select(.Vulnerabilities | length > 0)'
+
+echo "Pushing image to Docker Hub..."
+echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+docker push "${IMAGE_NAME}:${IMAGE_TAG}"
+
+echo "Starting containers..."
+docker compose up -d
 
 echo "CI process completed successfully."
 ```
@@ -59,7 +95,9 @@ bash ci.sh
 1. Lint and format code
 2. Run tests
 3. Build docker images
-4. Start the app with docker compose
+4. Scan for vulnerabilities with trivy
+5. Push the image to docker hub
+6. Start the container with docker compose
 
 ---
 
@@ -81,7 +119,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies)
+# Install all dependencies (excluding dev dependencies)
 RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy source code
@@ -108,6 +146,7 @@ CMD ["node", "server.js"]
 ```yaml
 services:
   app:
+    image: "${IMAGE_NAME}:${IMAGE_TAG}"
     build: .
     ports:
       - "3000:3000"
@@ -142,12 +181,15 @@ volumes:
 ## Validating the Pipeline
 
 1. Run the CI script
+
 2. Verify that:
    - ESLint and Prettier run without any errors
    - All tests pass `npm test`
+   - Trivy vulnerability scan returned nothing
+   - Image push to docker hub was successful
    - Docker builds successfully
    - App is accessible through `http://localhost:3000`
-
+   
 3. Check that postgreSQL data persists after stopping containers:
 
    ```bash
@@ -156,6 +198,3 @@ volumes:
    ```
 
    - Data in pgdata should persist and remain intact.
-
-
-
