@@ -78,6 +78,8 @@ pipeline {
                                                  usernameVariable: 'POSTGRES_USER',
                                                  passwordVariable: 'POSTGRES_PASSWORD')]) {
                     sh '''
+                      # Stop and remove any existing containers for this project
+                      docker compose down || true
                       docker compose up -d
                     '''
                 }
