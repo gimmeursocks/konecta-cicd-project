@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "gimmeursocks/konecta-cicd-project"
         // use the short commit hash from the GitHub webhook as the tag
-        IMAGE_TAG  = "${GIT_COMMIT[0..6]}"
+        IMAGE_TAG  = "${env.GIT_COMMIT.take(7)}"
         APP_PORT       = '3000'
         POSTGRES_PORT  = '5432'
     }
