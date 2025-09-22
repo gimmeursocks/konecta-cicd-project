@@ -36,7 +36,11 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker compose build'
+                withCredentials([usernamePassword(credentialsId: 'pg-creds',
+                                                 usernameVariable: 'POSTGRES_USER',
+                                                 passwordVariable: 'POSTGRES_PASSWORD')]) {
+                    sh 'docker compose build'
+                }
             }
         }
 
