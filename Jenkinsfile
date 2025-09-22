@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = gimmeursocks/konecta-cicd-project
+        IMAGE_NAME = "gimmeursocks/konecta-cicd-project"
         // use the short commit hash from the GitHub webhook as the tag
         IMAGE_TAG  = "${GIT_COMMIT[0..6]}"
     }
