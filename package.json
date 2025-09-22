@@ -5,7 +5,7 @@
   "scripts": {
     "test": "jest",
     "start": "node server.js",
-    "prepare": "husky"
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",

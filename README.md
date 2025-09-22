@@ -240,7 +240,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-      
+
       - name: Short commit
         run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
@@ -438,10 +438,40 @@ pipeline {
 
 ---
 
+## Pre-commit Hook for Auto-Formatting
+
+To keep the codebase clean and consistent, we use a Git pre-commit hook that runs the formatter automatically before each commit:
+
+1. Install Husky
+
+   ```bash
+   npm install --save-dev husky
+   npx husky init
+   ```
+
+2. Create the hook
+
+   ```bash
+   echo "npm run format" > .husky/pre-commit
+   ```
+
+3. Format script
+    In `package.json`:
+
+   ```json
+   "scripts": {
+     "format": "prettier --write ."
+   }
+   ```
+
+Now every `git commit` will automatically format files with Prettier before the commit is finalized, the CI steps are still kept for errors that might slip through the cracks.
+
+---
+
 ## Common Issues & Fixes
 
-| Issue                                  | Symptom / Error                                              | Fix                                                          |
-| -------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| **Port 5432 already in use**           | `bind: address already in use` when starting PostgreSQL container | I had a local PostgreSQL service running. Stopped it (`sudo systemctl stop postgresql`). |
-| **Jenkins can’t access Docker daemon** | Build steps fail with `permission denied while trying to connect to the Docker daemon socket` | Added the `jenkins` user to the `docker` group and restarted Jenkins: `sudo usermod -aG docker jenkins && sudo systemctl restart jenkins`. |
-| **GitHub Webhook not triggering**      | No Jenkins job scheduled after a successful trigger          | Double check webhook URL (`http://<my-public-ip>:8090/github-webhook/`), repository “Webhook” settings, and make sure the server is reachable from the internet. |
+| Issue                                  | Symptom / Error                                                                               | Fix                                                                                                                                                              |
+| -------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Port 5432 already in use**           | `bind: address already in use` when starting PostgreSQL container                             | I had a local PostgreSQL service running. Stopped it (`sudo systemctl stop postgresql`).                                                                         |
+| **Jenkins can’t access Docker daemon** | Build steps fail with `permission denied while trying to connect to the Docker daemon socket` | Added the `jenkins` user to the `docker` group and restarted Jenkins: `sudo usermod -aG docker jenkins && sudo systemctl restart jenkins`.                       |
+| **GitHub Webhook not triggering**      | No Jenkins job scheduled after a successful trigger                                           | Double check webhook URL (`http://<my-public-ip>:8090/github-webhook/`), repository “Webhook” settings, and make sure the server is reachable from the internet. |
