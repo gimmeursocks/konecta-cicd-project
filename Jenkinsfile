@@ -7,8 +7,6 @@ pipeline {
         IMAGE_TAG  = "${GIT_COMMIT[0..6]}"
         APP_PORT       = '3000'
         POSTGRES_PORT  = '5432'
-        POSTGRES_USER  = credentials('pg-user')
-        POSTGRES_PASSWORD = credentials('pg-pass')
     }
 
     stages {
