@@ -1,12 +1,11 @@
 services:
   app:
-    image: "${IMAGE_NAME}:${IMAGE_TAG}"
     build: .
+    image: "${IMAGE_NAME}:${IMAGE_TAG}"
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "3000:${APP_PORT}"
     environment:
       APP_PORT: ${APP_PORT}
-      POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -16,7 +15,7 @@ services:
   postgres:
     image: postgres:alpine
     ports:
-      - "${POSTGRES_PORT}:5342"
+      - "${POSTGRES_PORT}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

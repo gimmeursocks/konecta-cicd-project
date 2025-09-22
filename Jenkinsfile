@@ -5,6 +5,10 @@ pipeline {
         IMAGE_NAME = "gimmeursocks/konecta-cicd-project"
         // use the short commit hash from the GitHub webhook as the tag
         IMAGE_TAG  = "${GIT_COMMIT[0..6]}"
+        APP_PORT       = '3000'
+        POSTGRES_PORT  = '5432'
+        POSTGRES_USER  = credentials('pg-user')
+        POSTGRES_PASSWORD = credentials('pg-pass')
     }
 
     stages {
@@ -68,7 +72,13 @@ pipeline {
 
         stage('Deploy Containers') {
             steps {
-                sh 'docker compose up -d'
+                withCredentials([usernamePassword(credentialsId: 'pg-creds',
+                                                 usernameVariable: 'POSTGRES_USER',
+                                                 passwordVariable: 'POSTGRES_PASSWORD')]) {
+                    sh '''
+                      docker compose up -d
+                    '''
+                }
             }
         }
     }
