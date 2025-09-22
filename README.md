@@ -36,7 +36,7 @@ We were tasked with dockerizing a node.js application to track team members avai
    DOCKER_PASS=your_dockerhub_password
    IMAGE_NAME=your-username/your-image
    IMAGE_TAG=latest
-   
+
    APP_PORT=3000
    POSTGRES_PORT=5432
    POSTGRES_USER=postgres
@@ -456,11 +456,11 @@ To keep the codebase clean and consistent, we use a Git pre-commit hook that run
    ```
 
 3. Format script
-    In `package.json`:
+   In `package.json`:
 
    ```json
    "scripts": {
-     "format": "prettier --write ."
+     "format": "npx prettier --write ."
    }
    ```
 

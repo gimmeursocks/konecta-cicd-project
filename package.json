@@ -5,7 +5,7 @@
   "scripts": {
     "test": "jest",
     "start": "node server.js",
-    "format": "prettier --write ."
+    "format": "npx prettier --write ."
   },
   "keywords": [],
   "author": "",
