@@ -33,7 +33,8 @@ echo "Pushing image to Docker Hub..."
 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 docker push "${IMAGE_NAME}:${IMAGE_TAG}"
 
-echo "Starting containers..."
+echo "Starting containers and stopping old ones..."
+docker compose down || true
 docker compose up -d
 
 echo "CI process completed successfully."
