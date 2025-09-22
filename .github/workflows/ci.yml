@@ -9,8 +9,8 @@ env:
   IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
   DOCKER_USER: ${{ secrets.DOCKER_USER }}
   DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
-  APP_PORT: ${{ secrets.APP_PORT }}
-  POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+  APP_PORT: 3000
+  POSTGRES_PORT: 5432
   POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
   POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
 
