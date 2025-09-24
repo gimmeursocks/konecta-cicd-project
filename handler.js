@@ -1,7 +1,4 @@
-// eslint-disable-next-line no-unused-vars
-exports.handler = async (event) => {
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ message: "Hello from Lambda!" }),
-  };
-};
+const serverlessExpress = require("@vendia/serverless-express");
+const app = require("./server"); // exports app instance
+
+exports.handler = serverlessExpress({ app });
