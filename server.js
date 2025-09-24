@@ -30,7 +30,9 @@ app.use("/input", express.static(path.join(__dirname, "input")));
 // Read JSON from S3
 async function readHistory() {
   try {
-    const data = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: KEY }));
+    const data = await s3.send(
+      new GetObjectCommand({ Bucket: BUCKET, Key: KEY }),
+    );
     const body = await streamToString(data.Body);
     return body ? JSON.parse(body) : {};
   } catch (err) {
@@ -47,7 +49,7 @@ async function writeHistory(json) {
       Key: KEY,
       Body: JSON.stringify(json, null, 2),
       ContentType: "application/json",
-    })
+    }),
   );
 }
 

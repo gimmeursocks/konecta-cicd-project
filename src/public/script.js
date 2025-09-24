@@ -89,7 +89,7 @@ async function loadData() {
   weeksData = await weeksRes.json();
   statusesData = await statusRes.json();
 
-  historyData = await historyRes.json() || {};
+  historyData = (await historyRes.json()) || {};
 
   // Cleanup invalid entries
   for (const empId in historyData) {
