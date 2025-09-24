@@ -1,0 +1,15 @@
+FROM public.ecr.aws/lambda/nodejs:22-x86_64
+
+WORKDIR /var/task
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (excluding dev dependencies)
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy source code
+COPY src/ server.js handler.js ./
+
+# Run the application
+CMD ["handler.handler"]

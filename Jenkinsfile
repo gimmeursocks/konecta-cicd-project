@@ -32,7 +32,7 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+                sh 'docker build -f Dockerfile.lambda -t ${IMAGE_NAME}:${IMAGE_TAG} .'
             }
         }
         stage('Security Scan with Trivy') {
