@@ -1,1 +1,2 @@
+terraform fmt -recursive
 npm run format
