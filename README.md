@@ -32,12 +32,17 @@ We were tasked with dockerizing a node.js application to track team members avai
 3. Fill in the `.env.example`, then rename it to `.env`:
 
    ```bash
-   DOCKER_USER=your_dockerhub_username
-   DOCKER_PASS=your_dockerhub_password
    IMAGE_NAME=your-username/your-image
    IMAGE_TAG=latest
 
    APP_PORT=3000
+   S3_BUCKET=your-s3-bucket-name
+   AWS_REGION=your-aws-region
+
+   # Local development with postgres and dockerhub
+   DOCKER_USER=your_dockerhub_username
+   DOCKER_PASS=your_dockerhub_password
+
    POSTGRES_PORT=5432
    POSTGRES_USER=postgres
    POSTGRES_PASSWORD=postgres

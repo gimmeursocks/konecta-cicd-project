@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "main": "script.js",
   "scripts": {
-    "test": "NODE_ENV=test jest",
+    "test": "NODE_ENV=test jest server.test.js",
+    "devtest": "NODE_ENV=test jest server-dev.test.js",
     "start": "node server.js",
+    "dev": "node server-dev.js",
     "format": "npx prettier --write ."
   },
   "keywords": [],
@@ -14,7 +16,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.895.0",
     "@vendia/serverless-express": "^4.12.6",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",

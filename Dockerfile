@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy source code
-COPY src/ server.js ./
+COPY src/ server-dev.js ./
 
 # Best practice to use a non-root user
 RUN addgroup -S app && adduser -S app -G app && \
@@ -20,4 +20,4 @@ USER app
 EXPOSE 3000
 
 # Run the application
-CMD ["node", "server.js"]
+CMD ["node", "server-dev.js"]

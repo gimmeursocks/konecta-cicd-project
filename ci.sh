@@ -13,7 +13,7 @@ echo "Formatting code with Prettier..."
 npx prettier --check .
 
 echo "Running Tests with Jest..."
-npm test
+npm run devtest
 
 echo "Building Docker image..."
 docker compose build
