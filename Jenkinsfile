@@ -51,7 +51,7 @@ pipeline {
         }
         stage('Setup ECR Infrastructure') {
             steps {
-                withAWS(credentials: 'terraform-creds', region: "${AWS_DEFAULT_REGION}") {
+                withCredentials([[ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'terraform-creds']]){                                    
                     sh '''
                       cd terraform
                       terraform init
@@ -62,7 +62,7 @@ pipeline {
         }
         stage('Authenticate to ECR') {
             steps {
-                withAWS(credentials: 'aws-creds', region: "${AWS_DEFAULT_REGION}") {
+                withCredentials([[ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]){
                     sh '''
                       aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
                         | docker login --username AWS --password-stdin ${ECR_URI}
@@ -82,7 +82,7 @@ pipeline {
         }
         stage('Deploy Infrastructure') {
             steps {
-                withAWS(credentials: 'terraform-creds', region: "${AWS_DEFAULT_REGION}") {
+                withCredentials([[ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'terraform-creds']]){                    
                     sh '''
                       cd terraform
                       terraform apply -var="aws_account_id=${AWS_ACCOUNT_ID}" -var="image_tag=${IMAGE_TAG}" -auto-approve
