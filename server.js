@@ -16,14 +16,19 @@ const s3 = new S3Client({ region: process.env.AWS_REGION || "eu-central-1" });
 const BUCKET = process.env.S3_BUCKET || "konecta-cicd-project-json-bucket";
 const KEY = "output/history.json";
 
+const baseDir =
+  process.env.NODE_ENV === "test"
+    ? path.join(__dirname, "src")
+    : __dirname;
+
 // Middleware
 app.use(bodyParser.json());
 
 // Serve static frontend
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(baseDir, "public")));
 
 // Serve input JSON files
-app.use("/input", express.static(path.join(__dirname, "input")));
+app.use("/input", express.static(path.join(baseDir, "input")));
 
 // S3 Helper functions
 
