@@ -73,8 +73,7 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 sh '''
-                  ECR_URL='terraform output -raw ecr_repository_url'
-
+                  ECR_URL=$(terraform output -raw ecr_repository_url)
                   docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ECR_URL}:${IMAGE_TAG}
                   docker push ${ECR_URL}:${IMAGE_TAG}
                 '''
