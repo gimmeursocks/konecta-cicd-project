@@ -57,6 +57,10 @@ pipeline {
                       terraform init
                       terraform apply -var="aws_account_id=${AWS_ACCOUNT_ID}" -target=module.ecr_repo -auto-approve
                     '''
+                    script {
+                      def ecrUrl = sh(returnStdout: true, script: "cd terraform && terraform output -raw ecr_repository_url").trim()
+                      env.ECR_URL = ecrUrl
+                    }
                 }
             }
         }
@@ -73,8 +77,6 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 sh '''
-                  cd terraform
-                  ECR_URL=$(terraform output -raw ecr_repository_url)
                   docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ECR_URL}:${IMAGE_TAG}
                   docker push ${ECR_URL}:${IMAGE_TAG}
                 '''
@@ -87,17 +89,20 @@ pipeline {
                       cd terraform
                       terraform apply -var="aws_account_id=${AWS_ACCOUNT_ID}" -var="image_tag=${IMAGE_TAG}" -auto-approve
                     '''
+                    script {
+                      def apiUrl = sh(returnStdout: true, script: "cd terraform && terraform output -raw api_endpoint").trim()
+                      env.API_URL = apiUrl
+                    }
                 }
             }
         }
         stage('Test API Gateway Endpoint') {
             steps {
                 script {
-                    def apiUrl = sh(script: 'cd terraform && terraform output -raw api_endpoint', returnStdout: true).trim()
-                    echo "API Gateway URL: ${apiUrl}"
+                    echo "API Gateway URL: ${API_URL}"
                     // Wait for a few seconds to ensure the deployment is complete
                     sleep 10
-                    def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${apiUrl}", returnStdout: true).trim()
+                    def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${API_URL}", returnStdout: true).trim()
                     if (response == '200') {
                         echo 'API Gateway is reachable and returned status code 200.'
                     } else {
