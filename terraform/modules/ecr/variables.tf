@@ -9,6 +9,12 @@ variable "image_tag_mutability" {
   description = "ECR repository image tag mutability setting. Allowed values: 'MUTABLE' or 'IMMUTABLE'."
 }
 
+variable "force_delete" {
+  type        = bool
+  default     = false
+  description = "If true, forces the deletion of the repository even if it contains images."
+}
+
 variable "scan_on_push" {
   type        = bool
   default     = true

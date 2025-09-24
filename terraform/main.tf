@@ -3,6 +3,7 @@ module "ecr_repo" {
 
   name                 = "${var.project_name}-app"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
   scan_on_push         = true
 }
 
@@ -15,7 +16,7 @@ module "lambda_function" {
   source = "./modules/lambda"
 
   function_name = "${var.project_name}-container-lambda"
-  image_uri     = "${module.ecr_repo.repository_url}:latest"
+  image_uri     = "${module.ecr_repo.repository_url}:${var.image_tag}"
   s3_bucket_arn = module.s3_bucket.bucket_arn
 }
 

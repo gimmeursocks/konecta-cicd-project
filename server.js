@@ -1,37 +1,20 @@
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
-const { Pool } = require("pg");
+const {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3");
+const { Readable } = require("stream");
 
 const app = express();
 const PORT = process.env.APP_PORT || 3000;
 
-// PostgreSQL connection
-const pool = new Pool({
-  host: process.env.DB_HOST || "postgres",
-  port: process.env.DB_PORT || 5432,
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "postgres",
-  database: "postgres",
-});
-
-// Ensure table exists
-const initDb = async () => {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS history (
-      emp_id TEXT NOT NULL,
-      week TEXT NOT NULL,
-      day TEXT NOT NULL,
-      status TEXT NOT NULL,
-      PRIMARY KEY (emp_id, week, day)
-    )
-  `);
-};
-
-initDb().catch((err) => {
-  console.error("Failed to initialize DB:", err);
-  process.exit(1);
-});
+// S3 connection
+const s3 = new S3Client({ region: process.env.AWS_REGION || "eu-central-1" });
+const BUCKET = process.env.S3_BUCKET || "konecta-cicd-project-json-bucket";
+const KEY = "output/history.json";
 
 // Middleware
 app.use(bodyParser.json());
@@ -42,33 +25,48 @@ app.use(express.static(path.join(__dirname, "public")));
 // Serve input JSON files
 app.use("/input", express.static(path.join(__dirname, "input")));
 
-// Serve output folder (for history.json)
-app.use("/output", express.static(path.join(__dirname, "output")));
+// S3 Helper functions
+
+// Read JSON from S3
+async function readHistory() {
+  try {
+    const data = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: KEY }));
+    const body = await streamToString(data.Body);
+    return body ? JSON.parse(body) : {};
+  } catch (err) {
+    if (err.name === "NoSuchKey") return {};
+    throw err;
+  }
+}
+
+// Write JSON to S3
+async function writeHistory(json) {
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: KEY,
+      Body: JSON.stringify(json, null, 2),
+      ContentType: "application/json",
+    })
+  );
+}
+
+// Convert stream to string
+function streamToString(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    const s = stream instanceof Readable ? stream : Readable.from(stream);
+    s.on("data", (chunk) => chunks.push(chunk));
+    s.on("error", reject);
+    s.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+  });
+}
 
 // API to save history data
 app.post("/save-history", async (req, res) => {
   try {
-    const data = req.body; // { empId: { week: { day: status } } }
-
-    for (const empId in data) {
-      for (const week in data[empId]) {
-        for (const day in data[empId][week]) {
-          const status = data[empId][week][day];
-
-          await pool.query(
-            `
-            INSERT INTO history (emp_id, week, day, status)
-            VALUES ($1, $2, $3, $4)
-            ON CONFLICT (emp_id, week, day)
-            DO UPDATE SET status = EXCLUDED.status
-          `,
-            [empId, week, day, status],
-          );
-        }
-      }
-    }
-
-    console.log("History successfully saved.");
+    await writeHistory(req.body);
+    console.log("History saved to S3");
     res.status(200).send("Saved");
   } catch (err) {
     console.error("Error saving history:", err);
@@ -79,8 +77,8 @@ app.post("/save-history", async (req, res) => {
 // API to read history data, acts as output/history.json
 app.get("/history", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM history");
-    res.json(result.rows);
+    const history = await readHistory();
+    res.json(history);
   } catch (err) {
     console.error("Error reading history:", err);
     res.status(500).send("Failed to read history");

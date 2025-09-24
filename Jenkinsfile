@@ -7,6 +7,9 @@ pipeline {
         IMAGE_TAG  = "${env.GIT_COMMIT.take(7)}"
         APP_PORT       = '3000'
         POSTGRES_PORT  = '5432'
+        AWS_DEFAULT_REGION = 'eu-central-1'
+        AWS_ACCOUNT_ID = '328986589640'
+        ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
     }
 
     stages {
@@ -36,11 +39,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'pg-creds',
-                                                 usernameVariable: 'POSTGRES_USER',
-                                                 passwordVariable: 'POSTGRES_PASSWORD')]) {
-                    sh 'docker compose build'
-                }
+                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
             }
         }
 
@@ -59,29 +58,62 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Setup ECR Infrastructure') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-creds',
-                                                 usernameVariable: 'DOCKER_USER',
-                                                 passwordVariable: 'DOCKER_PASS')]) {
+                sh '''
+                  cd terraform
+                  terraform init
+                  terraform apply -var="aws_account_id=${AWS_ACCOUNT_ID}" -target=module.ecr_repo -auto-approve
+                '''
+            }
+        }
+
+        stage('Authenticate to ECR') {
+            steps {
+                withAWS(credentials: 'aws-creds', region: "${AWS_DEFAULT_REGION}") {
                     sh '''
-                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                      docker push "${IMAGE_NAME}:${IMAGE_TAG}"
+                      aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+                        | docker login --username AWS --password-stdin ${ECR_URI}
                     '''
                 }
             }
         }
 
-        stage('Deploy Containers') {
+        stage('Push to ECR') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'pg-creds',
-                                                 usernameVariable: 'POSTGRES_USER',
-                                                 passwordVariable: 'POSTGRES_PASSWORD')]) {
-                    sh '''
-                      # Stop and remove any existing containers for this project
-                      docker compose down || true
-                      docker compose up -d
-                    '''
+                sh '''
+                  ECR_URL='terraform output -raw ecr_repository_url'
+
+                  docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ECR_URL}:${IMAGE_TAG}
+                  docker push ${ECR_URL}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Deploy Infrastructure') {
+            steps {
+                sh '''
+                  cd terraform
+                  terraform apply -var="aws_account_id=${AWS_ACCOUNT_ID}" -var="image_tag=${IMAGE_TAG}" -auto-approve
+                '''
+            }
+        }
+
+        stage('Test API Gateway Endpoint') {
+            steps {
+                script {
+                    def apiUrl = sh(script: "cd terraform && terraform output -raw api_endpoint", returnStdout: true).trim()
+                    echo "API Gateway URL: ${apiUrl}"
+
+                    // Wait for a few seconds to ensure the deployment is complete
+                    sleep 10
+
+                    def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${apiUrl}", returnStdout: true).trim()
+                    if (response == '200') {
+                        echo "API Gateway is reachable and returned status code 200."
+                    } else {
+                        error "API Gateway test failed with status code ${response}."
+                    }
                 }
             }
         }

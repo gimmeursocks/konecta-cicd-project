@@ -14,3 +14,9 @@ variable "project_name" {
   type        = string
   default     = "konecta-cicd-project"
 }
+
+variable "image_tag" {
+  description = "The tag to use for the Docker image."
+  type        = string
+  default     = "latest"
+}
