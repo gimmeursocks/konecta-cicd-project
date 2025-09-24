@@ -1,2 +1,3 @@
 terraform fmt -recursive
 npm run format
+git add .

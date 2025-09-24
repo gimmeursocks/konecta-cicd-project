@@ -17,9 +17,7 @@ const BUCKET = process.env.S3_BUCKET || "konecta-cicd-project-json-bucket";
 const KEY = "output/history.json";
 
 const baseDir =
-  process.env.NODE_ENV === "test"
-    ? path.join(__dirname, "src")
-    : __dirname;
+  process.env.NODE_ENV === "test" ? path.join(__dirname, "src") : __dirname;
 
 // Middleware
 app.use(bodyParser.json());
